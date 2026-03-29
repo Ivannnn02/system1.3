@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SMARTENROLL | Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="SMARTENROLL internal dashboard for managing enrollment, tuition, batch sectioning, and student records.">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+
+<main class="dashboard-main">
+    <div class="dashboard-header">
+        <div>
+            <h1>Welcome to SMARTENROLL</h1>
+            <p>Select a module to continue managing Adreo Montessori Inc. records.</p>
+        </div>
+        <a href="index.php" class="dashboard-link">Homepage</a>
+    </div>
+
+    <div class="dashboard-grid">
+        <a href="enroll.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-clipboard-list"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Admissions</span>
+                <h2>Enrollment</h2>
+                <p>Manage applications and requirements.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="batch_sectioning.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Class Setup</span>
+                <h2>Batch &amp; Sectioning</h2>
+                <p>Organize sections and class groupings.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="track_tuition.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-receipt"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Finance</span>
+                <h2>Track Tuition</h2>
+                <p>Monitor balances and payment history.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="tuition_receipt.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-money-check-dollar"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Receipts</span>
+                <h2>Tuition Receipt</h2>
+                <p>Generate tuition breakdown receipts and email them to students.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="student_list.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Records</span>
+                <h2>Student List</h2>
+                <p>View enrolled students and details.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+
+        <a href="requirements_upload.php" class="dash-card">
+            <div class="dash-icon">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div class="dash-content">
+                <span class="dash-tag">Requirements</span>
+                <h2>Upload Requirements</h2>
+                <p>Upload and check student requirement files.</p>
+            </div>
+            <span class="dash-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+        </a>
+    </div>
+</main>
+
+</body>
+</html>
