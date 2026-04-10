@@ -56,17 +56,23 @@ if (ageInput) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const passwordField = document.querySelector(".password-field input");
-    const passwordToggle = document.querySelector(".password-icon");
+    const passwordFields = document.querySelectorAll(".password-field");
 
-    if (passwordField && passwordToggle) {
+    passwordFields.forEach((field) => {
+        const passwordInput = field.querySelector("input");
+        const passwordToggle = field.querySelector(".password-icon");
+
+        if (!passwordInput || !passwordToggle) {
+            return;
+        }
+
         passwordToggle.addEventListener("click", () => {
-            const isHidden = passwordField.type === "password";
-            passwordField.type = isHidden ? "text" : "password";
+            const isHidden = passwordInput.type === "password";
+            passwordInput.type = isHidden ? "text" : "password";
             const icon = passwordToggle.querySelector("i");
             if (icon) {
                 icon.className = isHidden ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
             }
         });
-    }
+    });
 });

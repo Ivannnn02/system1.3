@@ -1,13 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
-  const popup = document.getElementById('loginErrorPopup');
-  const closePopup = document.getElementById('closeLoginPopup');
-  const popupIcon = document.getElementById('loginPopupIcon');
   const emailInput = document.getElementById('loginEmail');
   const rememberInput = document.getElementById('rememberLogin');
   const rememberedEmailKey = 'smartenrollRememberedEmail';
+  const authCard = document.querySelector('.login-card');
+  const switchButtons = document.querySelectorAll('.auth-switch-btn');
+  const authPanels = document.querySelectorAll('.auth-panel');
 
-  if (!loginForm) return;
+  if (!loginForm) {
+    return;
+  }
+
+  function setActiveTab(target) {
+    switchButtons.forEach((button) => {
+      button.classList.toggle('active', button.dataset.authTarget === target);
+    });
+
+    authPanels.forEach((panel) => {
+      panel.classList.toggle('active', panel.dataset.authPanel === target);
+    });
+  }
+
+  const initialTab = authCard?.dataset.activeTab || 'login';
+  setActiveTab(initialTab);
 
   const savedEmail = window.localStorage.getItem(rememberedEmailKey) || '';
   if (savedEmail && emailInput) {
@@ -17,56 +32,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function showPopup() {
-    if (popup) {
-      popup.classList.add('active');
-      if (popupIcon) {
-        popupIcon.classList.remove('show-alert');
-        setTimeout(() => {
-          popupIcon.classList.add('show-alert');
-        }, 120);
-      }
-    }
-  }
-
-  function hidePopup() {
-    if (popup) {
-      popup.classList.remove('active');
-    }
-    if (popupIcon) {
-      popupIcon.classList.remove('show-alert');
-    }
-  }
-
   loginForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-
     const email = (emailInput?.value || '').trim();
-    const password = loginForm.querySelector('input[name="password"]')?.value || '';
     const shouldRemember = Boolean(rememberInput?.checked);
 
-    if (email === 'adreomontessori@gmail.com' && password === 'adreo') {
-      if (shouldRemember) {
-        window.localStorage.setItem(rememberedEmailKey, email);
-      } else {
-        window.localStorage.removeItem(rememberedEmailKey);
-      }
-      window.location.href = 'dashboard.php';
+    if (!email) {
+      window.localStorage.removeItem(rememberedEmailKey);
       return;
     }
 
-    showPopup();
+    if (shouldRemember) {
+      window.localStorage.setItem(rememberedEmailKey, email);
+    } else {
+      window.localStorage.removeItem(rememberedEmailKey);
+    }
   });
 
-  if (closePopup) {
-    closePopup.addEventListener('click', hidePopup);
-  }
-
-  if (popup) {
-    popup.addEventListener('click', (event) => {
-      if (event.target === popup) {
-        hidePopup();
-      }
+  switchButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      setActiveTab(button.dataset.authTarget || 'login');
     });
-  }
+  });
 });

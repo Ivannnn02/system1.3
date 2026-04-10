@@ -1255,8 +1255,11 @@ header {
     color: #1b1f2a;
 }
 
-.login-page header {
-    background: var(--logo-blue);
+.login-page header,
+.login-page .landing-header {
+    background: transparent !important;
+    box-shadow: none;
+    border: 0;
 }
 
 .login-page::before,
@@ -1394,6 +1397,58 @@ header {
     text-align: center;
 }
 
+.auth-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.auth-switch-btn {
+    border: 1px solid #d0d5dd;
+    background: #f8fafc;
+    color: #344054;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-switch-btn.active {
+    background: var(--logo-blue);
+    color: #fff;
+    border-color: var(--logo-blue);
+}
+
+.auth-panel {
+    display: none;
+}
+
+.auth-panel.active {
+    display: block;
+}
+
+.auth-alert {
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.auth-alert-error {
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    color: #b42318;
+}
+
+.auth-alert-success {
+    background: #ecfdf3;
+    border: 1px solid #abefc6;
+    color: #027a48;
+}
+
 .login-form {
     display: flex;
     flex-direction: column;
@@ -1409,15 +1464,19 @@ header {
     font-weight: 600;
 }
 
-.login-form input {
+.login-form input,
+.login-form select {
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 14px 14px;
     font-size: 15px;
     font-family: 'Poppins', sans-serif;
+    background: #fff;
+    color: #1f2937;
 }
 
-.login-form input:focus {
+.login-form input:focus,
+.login-form select:focus {
     outline: none;
     border-color: var(--logo-blue-light);
     box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.15);
@@ -1488,6 +1547,26 @@ header {
     color: var(--logo-blue-light);
     text-decoration: none;
     font-weight: 600;
+}
+
+.login-role-note {
+    margin-top: 28px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(208, 213, 221, 0.9);
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.06);
+}
+
+.login-role-note h3 {
+    color: var(--logo-blue);
+    margin-bottom: 8px;
+}
+
+.login-role-note p {
+    color: #475467;
+    font-size: 14px;
+    margin-bottom: 0;
 }
 
 .login-popup-overlay {
@@ -1695,6 +1774,144 @@ header {
     font-size: 14px;
 }
 
+.dashboard-user-meta {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dashboard-profile-link {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(4, 12, 26, 0.18);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-profile-link:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(4, 12, 26, 0.24);
+}
+
+.dashboard-profile-link:active {
+    transform: scale(0.94);
+}
+
+.dashboard-profile-link i {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+}
+
+.dashboard-profile-menu {
+    position: relative;
+}
+
+.dashboard-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    min-width: 220px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+    padding: 10px;
+    display: none;
+    z-index: 20;
+    transform: translateY(10px) scale(0.96);
+    opacity: 0;
+    transform-origin: top right;
+}
+
+.dashboard-profile-menu.open .dashboard-profile-dropdown {
+    display: block;
+    animation: dashboardProfileDropdownIn 0.18s ease-out forwards;
+}
+
+.dashboard-profile-menu.open .dashboard-profile-link {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.44);
+    box-shadow: 0 16px 32px rgba(4, 12, 26, 0.24);
+}
+
+.dashboard-profile-menu.open .dashboard-profile-link i {
+    transform: scale(1.08);
+}
+
+.dashboard-profile-summary {
+    padding: 10px 12px 12px;
+    border-bottom: 1px solid #eef2f7;
+    margin-bottom: 8px;
+}
+
+.dashboard-profile-name {
+    display: block;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.dashboard-profile-role {
+    display: block;
+    color: #667085;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.dashboard-profile-email {
+    display: block;
+    color: #98a2b3;
+    font-size: 12px;
+    margin-top: 4px;
+    word-break: break-word;
+}
+
+.dashboard-profile-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dashboard-profile-item:hover {
+    background: #f8fafc;
+}
+
+.dashboard-profile-item i {
+    color: var(--logo-blue);
+}
+
+@keyframes dashboardProfileDropdownIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .dashboard-link {
     text-decoration: none;
     color: var(--logo-blue);
@@ -1710,6 +1927,17 @@ header {
     background: var(--logo-yellow-soft);
     transform: translateY(-2px);
     box-shadow: 0 14px 28px rgba(253, 216, 53, 0.34);
+}
+
+.dashboard-link-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--logo-blue);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+.dashboard-link-secondary:hover {
+    background: #ffffff;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
 }
 
 .dashboard-grid {
@@ -1845,6 +2073,10 @@ header {
         flex-direction: column;
         align-items: flex-start;
         gap: 14px;
+    }
+
+    .dashboard-header-actions {
+        width: 100%;
     }
 
     .dash-card {

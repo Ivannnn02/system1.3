@@ -1,4 +1,11 @@
-﻿<!DOCTYPE html>
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/auth.php';
+
+$currentUser = smartenroll_require_login();
+?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,23 +14,50 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="SMARTENROLL internal dashboard for managing enrollment, tuition, batch sectioning, and student records.">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
-
-    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="dashboard-page">
 
+<header class="landing-header">
+    <a href="index.php#main-screen" class="logo" aria-label="Go to main screen">
+        <img src="assets/logo.png" alt="Adreo Montessori Inc. Logo">
+        <span>SMARTENROLL</span>
+    </a>
+    <div class="header-actions dashboard-profile-menu">
+        <button type="button" class="dashboard-profile-link" id="dashboardProfileToggle" aria-label="Open profile menu" aria-expanded="false">
+            <i class="fa-solid fa-user"></i>
+        </button>
+        <div class="dashboard-profile-dropdown" id="dashboardProfileDropdown">
+            <div class="dashboard-profile-summary">
+                <span class="dashboard-profile-name"><?php echo htmlspecialchars($currentUser['full_name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                <span class="dashboard-profile-role"><?php echo htmlspecialchars(ucfirst($currentUser['role']), ENT_QUOTES, 'UTF-8'); ?></span>
+                <span class="dashboard-profile-email"><?php echo htmlspecialchars($currentUser['email'], ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <a href="dashboard.php" class="dashboard-profile-item">
+                <i class="fa-solid fa-id-badge"></i>
+                <span>Account Details</span>
+            </a>
+            <a href="login.php?action=logout" class="dashboard-profile-item">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+</header>
+
 <main class="dashboard-main">
     <div class="dashboard-header">
         <div>
             <h1>Welcome to SMARTENROLL</h1>
             <p>Select a module to continue managing Adreo Montessori Inc. records.</p>
+            <p class="dashboard-user-meta">
+                Signed in as <?php echo htmlspecialchars($currentUser['full_name'], ENT_QUOTES, 'UTF-8'); ?>
+                (<?php echo htmlspecialchars(ucfirst($currentUser['role']), ENT_QUOTES, 'UTF-8'); ?>)
+            </p>
         </div>
-        <a href="index.php" class="dashboard-link">Homepage</a>
     </div>
 
     <div class="dashboard-grid">
@@ -101,5 +135,6 @@
     </div>
 </main>
 
+<script src="js/dashboard.js"></script>
 </body>
 </html>

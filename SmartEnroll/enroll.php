@@ -56,12 +56,30 @@
             <h2>A. Grade Level</h2>
 
             <div class="ch-grid">
-                <label><input type="radio" name="grade_level" value="Toddler"> Toddler</label>
-                <label><input type="radio" name="grade_level" value="Casa"> Casa</label>
-                <label><input type="radio" name="grade_level" value="Kindergarten"> Kindergarten</label>
-                <label><input type="radio" name="grade_level" value="Brave"> Brave SpEd</label>
-                <label><input type="radio" name="grade_level" value="Grade 1"> Grade 1</label>
-                <label><input type="radio" name="grade_level" value="Grade 2"> Grade 2</label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Toddler">
+                    <span class="grade-level-button">Toddler</span>
+                </label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Casa">
+                    <span class="grade-level-button">Casa</span>
+                </label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Kindergarten">
+                    <span class="grade-level-button">Kindergarten</span>
+                </label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Brave">
+                    <span class="grade-level-button">Brave SpEd</span>
+                </label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Grade 1">
+                    <span class="grade-level-button">Grade 1</span>
+                </label>
+                <label class="grade-level-option">
+                    <input type="radio" name="grade_level" value="Grade 2">
+                    <span class="grade-level-button">Grade 2</span>
+                </label>
             </div>
         </section>
 
