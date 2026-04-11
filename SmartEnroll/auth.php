@@ -3,9 +3,22 @@ declare(strict_types=1);
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+const SMARTENROLL_LOGIN_MAX_ATTEMPTS = 5;
+const SMARTENROLL_LOGIN_WINDOW_SECONDS = 900;
+const SMARTENROLL_LOGIN_LOCK_SECONDS = 600;
+
 function smartenroll_auth_start_session(): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
+        $secure = (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $secure,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
         session_start();
     }
 }
@@ -88,6 +101,135 @@ function smartenroll_require_login(): array
     }
 
     return $user;
+}
+
+function smartenroll_require_role(array $allowedRoles): array
+{
+    $user = smartenroll_require_login();
+    $role = strtolower(trim((string)($user['role'] ?? '')));
+    $normalizedAllowed = array_map(static fn(string $item): string => strtolower(trim($item)), $allowedRoles);
+
+    if (!in_array($role, $normalizedAllowed, true)) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
+
+    return $user;
+}
+
+function smartenroll_csrf_token(string $formKey = 'default'): string
+{
+    smartenroll_auth_start_session();
+    if (!isset($_SESSION['csrf_tokens']) || !is_array($_SESSION['csrf_tokens'])) {
+        $_SESSION['csrf_tokens'] = [];
+    }
+
+    if (!isset($_SESSION['csrf_tokens'][$formKey]) || !is_string($_SESSION['csrf_tokens'][$formKey]) || $_SESSION['csrf_tokens'][$formKey] === '') {
+        $_SESSION['csrf_tokens'][$formKey] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_tokens'][$formKey];
+}
+
+function smartenroll_verify_csrf(string $token, string $formKey = 'default'): bool
+{
+    smartenroll_auth_start_session();
+    $sessionToken = (string)($_SESSION['csrf_tokens'][$formKey] ?? '');
+    if ($sessionToken === '' || $token === '') {
+        return false;
+    }
+
+    return hash_equals($sessionToken, $token);
+}
+
+function smartenroll_issue_one_time_token(string $scope): string
+{
+    smartenroll_auth_start_session();
+    if (!isset($_SESSION['one_time_tokens']) || !is_array($_SESSION['one_time_tokens'])) {
+        $_SESSION['one_time_tokens'] = [];
+    }
+
+    $token = bin2hex(random_bytes(16));
+    $_SESSION['one_time_tokens'][$scope][$token] = time();
+    return $token;
+}
+
+function smartenroll_consume_one_time_token(string $scope, string $token): bool
+{
+    smartenroll_auth_start_session();
+    if ($token === '') {
+        return false;
+    }
+
+    $exists = isset($_SESSION['one_time_tokens'][$scope][$token]);
+    if ($exists) {
+        unset($_SESSION['one_time_tokens'][$scope][$token]);
+    }
+
+    return $exists;
+}
+
+function smartenroll_login_attempt_key(string $email): string
+{
+    $ip = trim((string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    return strtolower(trim($email)) . '|' . $ip;
+}
+
+function smartenroll_login_is_allowed(string $attemptKey, ?int &$retryAfterSeconds = null): bool
+{
+    smartenroll_auth_start_session();
+    $retryAfterSeconds = null;
+
+    $record = $_SESSION['login_attempts'][$attemptKey] ?? null;
+    if (!is_array($record)) {
+        return true;
+    }
+
+    $lockedUntil = (int)($record['locked_until'] ?? 0);
+    $now = time();
+    if ($lockedUntil > $now) {
+        $retryAfterSeconds = $lockedUntil - $now;
+        return false;
+    }
+
+    return true;
+}
+
+function smartenroll_record_login_failure(string $attemptKey): void
+{
+    smartenroll_auth_start_session();
+    if (!isset($_SESSION['login_attempts']) || !is_array($_SESSION['login_attempts'])) {
+        $_SESSION['login_attempts'] = [];
+    }
+
+    $now = time();
+    $record = $_SESSION['login_attempts'][$attemptKey] ?? [
+        'count' => 0,
+        'window_start' => $now,
+        'locked_until' => 0,
+    ];
+
+    $windowStart = (int)($record['window_start'] ?? $now);
+    if ($now - $windowStart > SMARTENROLL_LOGIN_WINDOW_SECONDS) {
+        $record['count'] = 0;
+        $record['window_start'] = $now;
+        $record['locked_until'] = 0;
+    }
+
+    $record['count'] = (int)($record['count'] ?? 0) + 1;
+    if ($record['count'] >= SMARTENROLL_LOGIN_MAX_ATTEMPTS) {
+        $record['locked_until'] = $now + SMARTENROLL_LOGIN_LOCK_SECONDS;
+    }
+
+    $_SESSION['login_attempts'][$attemptKey] = $record;
+}
+
+function smartenroll_clear_login_failures(string $attemptKey): void
+{
+    smartenroll_auth_start_session();
+    if (isset($_SESSION['login_attempts'][$attemptKey])) {
+        unset($_SESSION['login_attempts'][$attemptKey]);
+    }
 }
 
 function smartenroll_logout_user(): void

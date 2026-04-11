@@ -1,7 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+smartenroll_auth_start_session();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require_once __DIR__ . '/mail/PHPMailer/mail_helper.php';
+
+$currentUser = smartenroll_require_role(['admin', 'registrar']);
 
 $paymentHistory = [];
 $selectedStudent = null;
@@ -279,6 +282,38 @@ function get_paid_amounts_from_history(array $historyRows): array
     }
 
     return $totals;
+}
+
+function ensure_audit_log_table(mysqli $conn): void
+{
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS audit_logs (
+            id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL DEFAULT 0,
+            user_role VARCHAR(50) NOT NULL DEFAULT '',
+            action VARCHAR(120) NOT NULL,
+            entity_type VARCHAR(80) NOT NULL,
+            entity_id VARCHAR(120) NOT NULL DEFAULT '',
+            details_json LONGTEXT DEFAULT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_action_created (action, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+}
+
+function write_audit_log(mysqli $conn, array $actor, string $action, string $entityType, string $entityId, array $details = []): void
+{
+    $detailsJson = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $userId = (int)($actor['id'] ?? 0);
+    $userRole = trim((string)($actor['role'] ?? ''));
+
+    $stmt = $conn->prepare(
+        "INSERT INTO audit_logs (user_id, user_role, action, entity_type, entity_id, details_json)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param('isssss', $userId, $userRole, $action, $entityType, $entityId, $detailsJson);
+    $stmt->execute();
+    $stmt->close();
 }
 
 function parse_payment_items(string $rawJson, array $allowedOptions, array $feeDefaults, float $defaultTuitionAmount): array
@@ -591,8 +626,14 @@ try {
     }
 
     backfill_tuition_balances($conn);
+    ensure_audit_log_table($conn);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $csrfToken = trim((string)($_POST['csrf_token'] ?? ''));
+        if (!smartenroll_verify_csrf($csrfToken, 'tuition_receipt_details_form')) {
+            throw new RuntimeException('Session verification failed. Please refresh and try again.');
+        }
+
         $action = trim((string)($_POST['action'] ?? 'save_payment'));
         if ($selectedId === '') {
             throw new RuntimeException('Please select a student first.');
@@ -604,6 +645,11 @@ try {
         }
 
         if ($action === 'save_payment') {
+            $idempotencyKey = trim((string)($_POST['idempotency_key'] ?? ''));
+            if (!smartenroll_consume_one_time_token('tuition_save_payment', $idempotencyKey)) {
+                throw new RuntimeException('Duplicate or expired submission detected. Please refresh and try again.');
+            }
+
             $paymentDate = trim((string)($_POST['payment_date'] ?? date('Y-m-d')));
             $receiptNo = trim((string)($_POST['receipt_no'] ?? ''));
             $paymentNote = trim((string)($_POST['payment_note'] ?? ''));
@@ -699,31 +745,67 @@ try {
             $paymentItemsJson = json_encode($paymentItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $paymentToken = generate_payment_token();
 
-            $insertStmt = $conn->prepare(
-                "INSERT INTO tuition_payments (
-                    enrollment_id, student_id, email, school_year, grade_level, payment_date,
-                    amount_paid, tuition_fee, balance_after, receipt_no, payment_note, payment_items, payment_token, email_sent
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
-            );
-            $insertStmt->bind_param(
-                'isssssdddssss',
-                $selectedStudent['id'],
-                $selectedStudent['student_id'],
-                $emailValue,
-                $selectedStudent['school_year'],
-                $selectedStudent['grade_level'],
-                $paymentDate,
-                $amountPaid,
-                $tuitionFee,
-                $balanceAfter,
-                $receiptNo,
-                $paymentNote,
-                $paymentItemsJson,
-                $paymentToken
-            );
-            $insertStmt->execute();
-            $newPaymentId = (int)$insertStmt->insert_id;
-            $insertStmt->close();
+            $conn->begin_transaction();
+            try {
+                if ($receiptNo !== '') {
+                    $receiptCheckStmt = $conn->prepare(
+                        "SELECT id
+                         FROM tuition_payments
+                         WHERE enrollment_id = ?
+                           AND COALESCE(school_year, '') = ?
+                           AND receipt_no = ?
+                         LIMIT 1"
+                    );
+                    $receiptCheckStmt->bind_param('iss', $selectedStudent['id'], $selectedSchoolYear, $receiptNo);
+                    $receiptCheckStmt->execute();
+                    $duplicateReceipt = $receiptCheckStmt->get_result()->fetch_assoc();
+                    $receiptCheckStmt->close();
+
+                    if ($duplicateReceipt) {
+                        throw new RuntimeException('Official receipt number already exists for this school year.');
+                    }
+                }
+
+                $insertStmt = $conn->prepare(
+                    "INSERT INTO tuition_payments (
+                        enrollment_id, student_id, email, school_year, grade_level, payment_date,
+                        amount_paid, tuition_fee, balance_after, receipt_no, payment_note, payment_items, payment_token, email_sent
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+                );
+                $insertStmt->bind_param(
+                    'isssssdddssss',
+                    $selectedStudent['id'],
+                    $selectedStudent['student_id'],
+                    $emailValue,
+                    $selectedStudent['school_year'],
+                    $selectedStudent['grade_level'],
+                    $paymentDate,
+                    $amountPaid,
+                    $tuitionFee,
+                    $balanceAfter,
+                    $receiptNo,
+                    $paymentNote,
+                    $paymentItemsJson,
+                    $paymentToken
+                );
+                $insertStmt->execute();
+                $newPaymentId = (int)$insertStmt->insert_id;
+                $insertStmt->close();
+
+                write_audit_log($conn, $currentUser, 'tuition_payment_saved', 'tuition_payment', (string)$newPaymentId, [
+                    'student_id' => (string)$selectedStudent['student_id'],
+                    'school_year' => (string)$selectedSchoolYear,
+                    'amount_paid' => $amountPaid,
+                    'balance_after' => $balanceAfter,
+                    'receipt_no' => $receiptNo,
+                    'items' => $paymentItems,
+                ]);
+
+                $conn->commit();
+            } catch (Throwable $txError) {
+                $conn->rollback();
+                throw $txError;
+            }
 
             $_SESSION['pay_tuition_success'] = 'Receipt created. You can now send it to ' . ($emailValue !== '' ? $emailValue : 'the registered enrollment email') . '.';
             if (!filter_var($emailValue, FILTER_VALIDATE_EMAIL)) {
@@ -769,6 +851,11 @@ try {
             $updateStmt->bind_param('si', $studentEmail, $paymentId);
             $updateStmt->execute();
             $updateStmt->close();
+
+            write_audit_log($conn, $currentUser, 'tuition_receipt_emailed', 'tuition_payment', (string)$paymentId, [
+                'student_id' => (string)$selectedStudent['student_id'],
+                'email' => $studentEmail,
+            ]);
 
             $_SESSION['pay_tuition_success'] = 'Receipt sent to ' . $studentEmail . '.';
             header('Location: tuition_receipt_details.php?student_id=' . urlencode($selectedId) . '&payment_id=' . $paymentId);
@@ -887,6 +974,8 @@ foreach ($paymentOptions as $option) {
 }
 
 $paymentCatalogJson = htmlspecialchars(json_encode($paymentCatalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+$tuitionReceiptCsrfToken = smartenroll_csrf_token('tuition_receipt_details_form');
+$tuitionSaveIdempotencyKey = smartenroll_issue_one_time_token('tuition_save_payment');
 $emailConfig = get_email_config();
 $configuredAppUrl = trim((string)($emailConfig['app_url'] ?? ''));
 $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)parse_url($configuredAppUrl, PHP_URL_HOST));
@@ -1011,6 +1100,8 @@ $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)
                 <form class="payment-form" method="post" action="tuition_receipt_details.php" id="paymentBuilderForm">
                     <input type="hidden" name="action" value="save_payment">
                     <input type="hidden" name="student_id" value="<?php echo htmlspecialchars((string)$selectedStudent['student_id']); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($tuitionReceiptCsrfToken); ?>">
+                    <input type="hidden" name="idempotency_key" value="<?php echo htmlspecialchars($tuitionSaveIdempotencyKey); ?>">
                     <input type="hidden" name="payment_items_json" id="paymentItemsJson">
 
                     <div class="form-grid">
@@ -1122,6 +1213,7 @@ $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)
                     <form method="post" action="tuition_receipt_details.php" class="receipt-send-form">
                         <input type="hidden" name="action" value="send_receipt">
                         <input type="hidden" name="student_id" value="<?php echo htmlspecialchars((string)$selectedStudent['student_id']); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($tuitionReceiptCsrfToken); ?>">
                         <input type="hidden" name="payment_id" value="<?php echo (int)$selectedPayment['id']; ?>">
                         <button type="submit" class="secondary-btn" <?php echo filter_var($studentEmail, FILTER_VALIDATE_EMAIL) ? '' : 'disabled'; ?>>
                             <i class="fa-solid fa-paper-plane"></i>
@@ -1198,6 +1290,7 @@ $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)
                                             <form method="post" action="tuition_receipt_details.php" class="table-send-form">
                                                 <input type="hidden" name="action" value="send_receipt">
                                                 <input type="hidden" name="student_id" value="<?php echo htmlspecialchars((string)$selectedStudent['student_id']); ?>">
+                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($tuitionReceiptCsrfToken); ?>">
                                                 <input type="hidden" name="payment_id" value="<?php echo (int)$history['id']; ?>">
                                                 <button type="submit" class="table-send-btn" <?php echo filter_var($studentEmail, FILTER_VALIDATE_EMAIL) ? '' : 'disabled'; ?>>
                                                     Send
