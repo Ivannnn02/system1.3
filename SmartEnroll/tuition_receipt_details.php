@@ -156,6 +156,76 @@ function get_student(mysqli $conn, string $studentId): ?array
     return $student;
 }
 
+function get_school_year_paid_total(mysqli $conn, int $enrollmentId, string $schoolYear): float
+{
+    if ($enrollmentId <= 0) {
+        return 0.0;
+    }
+
+    $stmt = $conn->prepare(
+        "SELECT COALESCE(SUM(amount_paid), 0) AS total_paid
+         FROM tuition_payments
+         WHERE enrollment_id = ?
+           AND COALESCE(school_year, '') = ?"
+    );
+    $stmt->bind_param('is', $enrollmentId, $schoolYear);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    return round((float)($row['total_paid'] ?? 0), 2);
+}
+
+function backfill_tuition_balances(mysqli $conn): int
+{
+    $rows = [];
+    $result = $conn->query(
+        "SELECT id, enrollment_id, COALESCE(school_year, '') AS school_year, tuition_fee, amount_paid, balance_after, payment_date
+         FROM tuition_payments
+         ORDER BY enrollment_id ASC, school_year ASC, payment_date ASC, id ASC"
+    );
+
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+        $result->close();
+    }
+
+    if (empty($rows)) {
+        return 0;
+    }
+
+    $updated = 0;
+    $runningByGroup = [];
+    $updateStmt = $conn->prepare("UPDATE tuition_payments SET balance_after = ? WHERE id = ?");
+
+    foreach ($rows as $row) {
+        $enrollmentId = (int)($row['enrollment_id'] ?? 0);
+        $schoolYear = (string)($row['school_year'] ?? '');
+        $groupKey = $enrollmentId . '|' . $schoolYear;
+
+        if (!array_key_exists($groupKey, $runningByGroup)) {
+            $runningByGroup[$groupKey] = 0.0;
+        }
+
+        $runningByGroup[$groupKey] += (float)($row['amount_paid'] ?? 0);
+        $tuitionFee = round((float)($row['tuition_fee'] ?? 0), 2);
+        $computedBalance = max(0, round($tuitionFee - $runningByGroup[$groupKey], 2));
+        $storedBalance = round((float)($row['balance_after'] ?? 0), 2);
+
+        if (abs($computedBalance - $storedBalance) >= 0.01) {
+            $rowId = (int)($row['id'] ?? 0);
+            $updateStmt->bind_param('di', $computedBalance, $rowId);
+            $updateStmt->execute();
+            $updated++;
+        }
+    }
+
+    $updateStmt->close();
+    return $updated;
+}
+
 function parse_payment_items(string $rawJson, array $allowedOptions, array $feeDefaults, float $defaultTuitionAmount): array
 {
     $decoded = json_decode($rawJson, true);
@@ -465,6 +535,8 @@ try {
         $emptyTokenResult->close();
     }
 
+    backfill_tuition_balances($conn);
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = trim((string)($_POST['action'] ?? 'save_payment'));
         if ($selectedId === '') {
@@ -531,7 +603,20 @@ try {
                 throw new RuntimeException('Please select at least one billing item.');
             }
 
-            $balanceAfter = max(0, round($tuitionFee - $amountPaid, 2));
+            $selectedSchoolYear = trim((string)($selectedStudent['school_year'] ?? ''));
+            $alreadyPaid = get_school_year_paid_total($conn, (int)$selectedStudent['id'], $selectedSchoolYear);
+            $remainingBefore = max(0, round($tuitionFee - $alreadyPaid, 2));
+
+            if ($remainingBefore <= 0) {
+                throw new RuntimeException('Tuition is already fully paid for this school year.');
+            }
+
+            if ($amountPaid > $remainingBefore) {
+                throw new RuntimeException('The entered amount exceeds the remaining balance of ' . format_money($remainingBefore) . '.');
+            }
+
+            $runningPaid = round($alreadyPaid + $amountPaid, 2);
+            $balanceAfter = max(0, round($tuitionFee - $runningPaid, 2));
             $emailValue = trim((string)($selectedStudent['email'] ?? ''));
             $paymentItemsJson = json_encode($paymentItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             $paymentToken = generate_payment_token();
@@ -626,10 +711,13 @@ try {
     $historyStmt = $conn->prepare(
         "SELECT id, payment_date, amount_paid, tuition_fee, balance_after, receipt_no, payment_note, payment_items, payment_token, email_sent, created_at
          FROM tuition_payments
-         WHERE student_id = ?
+         WHERE enrollment_id = ?
+           AND COALESCE(school_year, '') = ?
          ORDER BY payment_date DESC, id DESC"
     );
-    $historyStmt->bind_param('s', $selectedId);
+    $selectedSchoolYear = trim((string)($selectedStudent['school_year'] ?? ''));
+    $selectedEnrollmentId = (int)($selectedStudent['id'] ?? 0);
+    $historyStmt->bind_param('is', $selectedEnrollmentId, $selectedSchoolYear);
     $historyStmt->execute();
     $historyResult = $historyStmt->get_result();
     while ($historyRow = $historyResult->fetch_assoc()) {

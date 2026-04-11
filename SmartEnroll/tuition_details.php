@@ -90,7 +90,7 @@ try {
         throw new RuntimeException('Missing student ID.');
     }
 
-    $stmt = $conn->prepare("SELECT student_id, learner_lname, learner_fname, learner_mname, grade_level, school_year, completion_date, email FROM enrollments WHERE student_id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, student_id, learner_lname, learner_fname, learner_mname, grade_level, school_year, completion_date, email FROM enrollments WHERE student_id = ? LIMIT 1");
     $stmt->bind_param('s', $studentId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -123,15 +123,23 @@ $totalTuition = array_key_exists($gradeLevel, $tuitionMap) ? (float)$tuitionMap[
 $amountPaid = 0.0;
 
 if ($student && isset($conn) && $conn instanceof mysqli) {
+    $selectedEnrollmentId = (int)($student['id'] ?? 0);
+    $selectedSchoolYear = trim((string)($student['school_year'] ?? ''));
+
     $tableCheck = $conn->query("SHOW TABLES LIKE 'tuition_payments'");
     $hasPaymentsTable = $tableCheck && $tableCheck->num_rows > 0;
     if ($tableCheck) {
         $tableCheck->close();
     }
 
-    if ($hasPaymentsTable) {
-        $paymentStmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid), 0) AS total_paid FROM tuition_payments WHERE student_id = ?");
-        $paymentStmt->bind_param('s', $studentId);
+    if ($hasPaymentsTable && $selectedEnrollmentId > 0) {
+        $paymentStmt = $conn->prepare(
+            "SELECT COALESCE(SUM(amount_paid), 0) AS total_paid
+             FROM tuition_payments
+             WHERE enrollment_id = ?
+               AND COALESCE(school_year, '') = ?"
+        );
+        $paymentStmt->bind_param('is', $selectedEnrollmentId, $selectedSchoolYear);
         $paymentStmt->execute();
         $paymentRow = $paymentStmt->get_result()->fetch_assoc();
         $paymentStmt->close();

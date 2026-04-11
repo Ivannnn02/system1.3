@@ -15,6 +15,15 @@ function connectEnrollmentDb(): mysqli
     return $conn;
 }
 
+function bindParamsSafe(mysqli_stmt $stmt, string $types, array $values): void
+{
+    $refs = [$types];
+    foreach ($values as $key => $value) {
+        $refs[] = &$values[$key];
+    }
+    call_user_func_array([$stmt, 'bind_param'], $refs);
+}
+
 try {
     $conn = connectEnrollmentDb();
 
@@ -63,7 +72,7 @@ try {
 
     if (!empty($params)) {
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
+        bindParamsSafe($stmt, $types, $params);
         $stmt->execute();
         $resOptions = $stmt->get_result();
     } else {
