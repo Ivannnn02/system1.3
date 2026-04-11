@@ -226,6 +226,61 @@ function backfill_tuition_balances(mysqli $conn): int
     return $updated;
 }
 
+function get_paid_amounts_by_option(mysqli $conn, int $enrollmentId, string $schoolYear): array
+{
+    $totals = [];
+    if ($enrollmentId <= 0) {
+        return $totals;
+    }
+
+    $stmt = $conn->prepare(
+        "SELECT payment_items, amount_paid
+         FROM tuition_payments
+         WHERE enrollment_id = ?
+           AND COALESCE(school_year, '') = ?"
+    );
+    $stmt->bind_param('is', $enrollmentId, $schoolYear);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $items = decode_saved_payment_items((string)($row['payment_items'] ?? ''), (float)($row['amount_paid'] ?? 0));
+        foreach ($items as $item) {
+            $option = trim((string)($item['option'] ?? $item['label'] ?? ''));
+            if ($option === '') {
+                continue;
+            }
+
+            $totals[$option] = round((float)($totals[$option] ?? 0) + (float)($item['amount'] ?? 0), 2);
+        }
+    }
+
+    $stmt->close();
+    return $totals;
+}
+
+function get_paid_amounts_from_history(array $historyRows): array
+{
+    $totals = [];
+
+    foreach ($historyRows as $row) {
+        $items = is_array($row['items'] ?? null)
+            ? $row['items']
+            : decode_saved_payment_items((string)($row['payment_items'] ?? ''), (float)($row['amount_paid'] ?? 0));
+
+        foreach ($items as $item) {
+            $option = trim((string)($item['option'] ?? $item['label'] ?? ''));
+            if ($option === '') {
+                continue;
+            }
+
+            $totals[$option] = round((float)($totals[$option] ?? 0) + (float)($item['amount'] ?? 0), 2);
+        }
+    }
+
+    return $totals;
+}
+
 function parse_payment_items(string $rawJson, array $allowedOptions, array $feeDefaults, float $defaultTuitionAmount): array
 {
     $decoded = json_decode($rawJson, true);
@@ -553,12 +608,14 @@ try {
             $receiptNo = trim((string)($_POST['receipt_no'] ?? ''));
             $paymentNote = trim((string)($_POST['payment_note'] ?? ''));
             $gradeLevel = trim((string)($selectedStudent['grade_level'] ?? ''));
+            $selectedSchoolYear = trim((string)($selectedStudent['school_year'] ?? ''));
 
             if (!array_key_exists($gradeLevel, $tuitionMap)) {
                 throw new RuntimeException('No tuition fee is configured yet for this grade level.');
             }
 
             $tuitionFee = (float)$tuitionMap[$gradeLevel];
+            $paidByOption = get_paid_amounts_by_option($conn, (int)$selectedStudent['id'], $selectedSchoolYear);
             $gradeFeeDefaults = $gradeBreakdownMap[$gradeLevel] ?? ['Tuition Fee' => $tuitionFee];
             $fixedFeeTotal = 0.0;
             foreach ($gradeFeeDefaults as $option => $defaultAmount) {
@@ -585,6 +642,18 @@ try {
                 $paymentConfig['Monthly Payment'] = round($fullTuitionAmount / 10, 2);
             }
 
+            foreach (array_keys($paymentConfig) as $option) {
+                if ($option === 'Tuition Fee' || $option === 'Monthly Payment') {
+                    continue;
+                }
+
+                $requiredAmount = round((float)($paymentConfig[$option] ?? 0), 2);
+                $alreadyPaid = round((float)($paidByOption[$option] ?? 0), 2);
+                if ($requiredAmount > 0 && $alreadyPaid + 0.01 >= $requiredAmount) {
+                    unset($paymentConfig[$option]);
+                }
+            }
+
             $paymentOptions = array_keys($paymentConfig);
             $paymentItems = parse_payment_items(
                 (string)($_POST['payment_items_json'] ?? ''),
@@ -592,6 +661,16 @@ try {
                 $paymentConfig,
                 $tuitionFee
             );
+
+            $selectedPaymentOptions = array_map(
+                static fn(array $item): string => trim((string)($item['option'] ?? '')),
+                $paymentItems
+            );
+            $hasTuitionFee = in_array('Tuition Fee', $selectedPaymentOptions, true);
+            $hasMonthlyPayment = in_array('Monthly Payment', $selectedPaymentOptions, true);
+            if ($hasTuitionFee && $hasMonthlyPayment) {
+                throw new RuntimeException('Choose either Tuition Fee or Monthly Payment only, not both.');
+            }
 
             $paymentDateTime = DateTime::createFromFormat('Y-m-d', $paymentDate);
             if (!$paymentDateTime || $paymentDateTime->format('Y-m-d') !== $paymentDate) {
@@ -603,7 +682,6 @@ try {
                 throw new RuntimeException('Please select at least one billing item.');
             }
 
-            $selectedSchoolYear = trim((string)($selectedStudent['school_year'] ?? ''));
             $alreadyPaid = get_school_year_paid_total($conn, (int)$selectedStudent['id'], $selectedSchoolYear);
             $remainingBefore = max(0, round($tuitionFee - $alreadyPaid, 2));
 
@@ -749,11 +827,15 @@ $fullTuitionAmount = max(0, round($selectedTuitionFee - $fixedFeeTotal, 2));
 $monthlyPaymentAmount = max(0, round($fullTuitionAmount / 10, 2));
 $savedReceiptCount = count($paymentHistory);
 $remainingBalance = max(0, round($selectedTuitionFee - sum_payment_history($paymentHistory), 2));
+$paidByOption = get_paid_amounts_from_history($paymentHistory);
 $studentName = $selectedStudent ? format_name($selectedStudent) : '';
 $studentEmail = trim((string)($selectedStudent['email'] ?? ''));
 
+$tuitionPayNowAmount = max(0, round($remainingBalance, 2));
+$monthlyPaymentDisplayAmount = max(0, round(min($monthlyPaymentAmount, $remainingBalance), 2));
+
 $paymentCatalogConfig = $gradeFeeDefaults;
-$paymentCatalogConfig['Tuition Fee'] = $selectedTuitionFee;
+$paymentCatalogConfig['Tuition Fee'] = $tuitionPayNowAmount;
 
 $registrationKey = 'Registration Fee & Miscellaneous';
 if (array_key_exists($registrationKey, $paymentCatalogConfig)) {
@@ -761,28 +843,45 @@ if (array_key_exists($registrationKey, $paymentCatalogConfig)) {
     foreach ($paymentCatalogConfig as $option => $amount) {
         $catalogWithMonthly[$option] = $amount;
         if ($option === $registrationKey) {
-            $catalogWithMonthly['Monthly Payment'] = $monthlyPaymentAmount;
+            $catalogWithMonthly['Monthly Payment'] = $monthlyPaymentDisplayAmount;
         }
     }
     $paymentCatalogConfig = $catalogWithMonthly;
 } else {
-    $paymentCatalogConfig['Monthly Payment'] = $monthlyPaymentAmount;
+    $paymentCatalogConfig['Monthly Payment'] = $monthlyPaymentDisplayAmount;
 }
 
 $paymentOptions = array_keys($paymentCatalogConfig);
 $paymentCatalog = [];
 foreach ($paymentOptions as $option) {
     $defaultAmount = (float)($paymentCatalogConfig[$option] ?? 0);
-    if ($option === 'Tuition Fee') {
-        $hint = 'The brochure amount shows the annual program total. You can still enter the amount manually.';
-    } elseif ($option === 'Monthly Payment') {
-        $hint = 'This uses the brochure monthly tuition amount automatically.';
+    $disabled = false;
+
+    if ($option === 'Tuition Fee' || $option === 'Monthly Payment') {
+        $disabled = $remainingBalance <= 0;
     } else {
-        $hint = 'This uses the fixed amount from the grade-level brochure you provided.';
+        $requiredAmount = round((float)($gradeFeeDefaults[$option] ?? $defaultAmount), 2);
+        $alreadyPaid = round((float)($paidByOption[$option] ?? 0), 2);
+        $disabled = $requiredAmount > 0 && $alreadyPaid + 0.01 >= $requiredAmount;
+    }
+
+    if ($option === 'Tuition Fee') {
+        $hint = $disabled
+            ? 'Tuition is already fully paid for this school year.'
+            : 'Shows the current remaining balance. Use this to settle the full unpaid amount now.';
+    } elseif ($option === 'Monthly Payment') {
+        $hint = $disabled
+            ? 'Tuition is already fully paid for this school year.'
+            : 'This uses the brochure monthly tuition amount, capped by the current remaining balance.';
+    } else {
+        $hint = $disabled
+            ? 'This item is already fully paid.'
+            : 'This uses the fixed amount from the grade-level brochure you provided.';
     }
     $paymentCatalog[] = [
         'option' => $option,
         'default_amount' => round($defaultAmount, 2),
+        'disabled' => $disabled,
         'hint' => $hint,
     ];
 }
@@ -874,7 +973,8 @@ $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)
             <section class="card-block">
                 <div class="block-head">
                     <h3>Step 2: Choose Payment Rows</h3>
-                    <p>Select the brochure items you want to include. Tuition Fee now shows the annual program total, and Monthly Payment is available as a fixed choice.</p>
+                    <p>Select the brochure items you want to include. Tuition Fee now shows the current remaining balance, and Monthly Payment is available as a fixed choice.</p>
+                    <p class="selection-rule-note">Choose either Tuition Fee or Monthly Payment per receipt (not both).</p>
                 </div>
 
                 <div class="payment-catalog-card" id="paymentCatalog" data-catalog="<?php echo $paymentCatalogJson; ?>">
@@ -886,12 +986,13 @@ $uploadLinkNeedsRealHost = $configuredAppUrl === '' || is_loopback_host((string)
                     </div>
                     <?php foreach ($paymentCatalog as $catalogItem): ?>
                         <div
-                            class="catalog-row"
+                            class="catalog-row<?php echo !empty($catalogItem['disabled']) ? ' is-disabled' : ''; ?>"
                             data-option="<?php echo htmlspecialchars($catalogItem['option']); ?>"
                             data-default="<?php echo htmlspecialchars(number_format((float)$catalogItem['default_amount'], 2, '.', '')); ?>"
+                            data-disabled="<?php echo !empty($catalogItem['disabled']) ? '1' : '0'; ?>"
                         >
-                            <button type="button" class="catalog-add-btn" aria-label="Add <?php echo htmlspecialchars($catalogItem['option']); ?>">
-                                <i class="fa-solid fa-plus"></i>
+                            <button type="button" class="catalog-add-btn" aria-label="Add <?php echo htmlspecialchars($catalogItem['option']); ?>" <?php echo !empty($catalogItem['disabled']) ? 'disabled' : ''; ?>>
+                                <i class="fa-solid <?php echo !empty($catalogItem['disabled']) ? 'fa-check' : 'fa-plus'; ?>"></i>
                             </button>
                             <strong><?php echo htmlspecialchars($catalogItem['option']); ?></strong>
                             <span><?php echo htmlspecialchars(format_money((float)$catalogItem['default_amount'])); ?></span>

@@ -33,9 +33,54 @@ function parseAmount(value) {
   return parseFloat(String(value || '').replace(/[^0-9.\-]/g, '')) || 0;
 }
 
+function showToast(message) {
+  let container = document.getElementById('smartenrollToastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'smartenrollToastContainer';
+    container.className = 'sr-toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'sr-toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  window.setTimeout(() => {
+    toast.classList.add('is-hiding');
+    window.setTimeout(() => {
+      toast.remove();
+      if (!container.hasChildNodes()) {
+        container.remove();
+      }
+    }, 240);
+  }, 2400);
+}
+
 if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
   const fullTuition = parseAmount(selectedPaymentTable.dataset.fullTuition || '0');
+  const remainingBeforePayment = parseAmount(selectedPaymentTable.dataset.remaining || String(fullTuition));
   const getRows = () => Array.from(selectedPaymentTable.querySelectorAll('.selected-payment-row[data-option]'));
+
+  const getRowAmount = (row) => {
+    const option = row.dataset.option || '';
+    if (option === 'Tuition Fee') {
+      return parseAmount(row.querySelector('.tuition-manual-input')?.value);
+    }
+    return parseAmount(row.dataset.amount || '0');
+  };
+
+  const getMaxTuitionAllowed = (tuitionRow) => {
+    const otherRowsTotal = getRows().reduce((sum, row) => {
+      if (row === tuitionRow) {
+        return sum;
+      }
+      return sum + Math.max(getRowAmount(row), 0);
+    }, 0);
+
+    return Math.max(remainingBeforePayment - otherRowsTotal, 0);
+  };
 
   const syncEmptyState = () => {
     const hasRows = getRows().length > 0;
@@ -47,13 +92,24 @@ if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
   const syncTotals = () => {
     let total = 0;
     getRows().forEach((row) => {
-      const amount = row.dataset.option === 'Tuition Fee'
-        ? parseAmount(row.querySelector('.tuition-manual-input')?.value)
-        : parseAmount(row.dataset.amount || '0');
+      const amount = getRowAmount(row);
       total += Math.max(amount, 0);
+
+      if (row.dataset.option === 'Tuition Fee') {
+        const tuitionInput = row.querySelector('.tuition-manual-input');
+        const maxAllowed = getMaxTuitionAllowed(row);
+        if (tuitionInput) {
+          tuitionInput.max = maxAllowed.toFixed(2);
+          const currentValue = parseAmount(tuitionInput.value);
+          if (currentValue > maxAllowed) {
+            tuitionInput.value = maxAllowed.toFixed(2);
+            showToast('Tuition Fee cannot exceed the remaining balance.');
+          }
+        }
+      }
     });
 
-    const remaining = Math.max(fullTuition - total, 0);
+    const remaining = Math.max(remainingBeforePayment - total, 0);
 
     if (paymentPreview) {
       paymentPreview.textContent = formatPHP(total);
@@ -72,6 +128,13 @@ if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
       return;
     }
 
+    const hasTuitionFee = getRows().some((row) => row.dataset.option === 'Tuition Fee');
+    const hasMonthlyPayment = getRows().some((row) => row.dataset.option === 'Monthly Payment');
+    if ((option === 'Tuition Fee' && hasMonthlyPayment) || (option === 'Monthly Payment' && hasTuitionFee)) {
+      showToast('Choose either Tuition Fee or Monthly Payment only, not both.');
+      return;
+    }
+
     const fragment = selectedPaymentRowTemplate.content.cloneNode(true);
     const row = fragment.querySelector('.selected-payment-row');
     const name = row.querySelector('.selected-item-name');
@@ -86,10 +149,27 @@ if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
     name.textContent = option;
     suggested.textContent = formatPHP(defaultAmount);
     if (option === 'Tuition Fee') {
+      const maxAllowed = getMaxTuitionAllowed(row);
+      if (maxAllowed <= 0) {
+        showToast('No remaining balance available for Tuition Fee.');
+        return;
+      }
+
       tuitionWrap?.classList.remove('is-hidden');
       if (tuitionInput) {
-        tuitionInput.value = defaultAmount > 0 ? defaultAmount.toFixed(2) : '';
-        tuitionInput.addEventListener('input', syncTotals);
+        const initialValue = Math.min(defaultAmount, maxAllowed);
+        tuitionInput.value = initialValue > 0 ? initialValue.toFixed(2) : '';
+        tuitionInput.max = maxAllowed.toFixed(2);
+        tuitionInput.addEventListener('input', () => {
+          const currentValue = parseAmount(tuitionInput.value);
+          const latestMax = getMaxTuitionAllowed(row);
+          tuitionInput.max = latestMax.toFixed(2);
+          if (currentValue > latestMax) {
+            tuitionInput.value = latestMax.toFixed(2);
+            showToast('Tuition Fee cannot exceed the remaining balance.');
+          }
+          syncTotals();
+        });
       }
       if (status) {
         status.textContent = 'Manual input';
@@ -109,6 +189,10 @@ if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
   paymentCatalog.querySelectorAll('.catalog-row[data-option]').forEach((catalogRow) => {
     const button = catalogRow.querySelector('.catalog-add-btn');
     button?.addEventListener('click', () => {
+      if (catalogRow.dataset.disabled === '1') {
+        return;
+      }
+
       const option = catalogRow.dataset.option || '';
       const defaultAmount = parseAmount(catalogRow.dataset.default || '0');
       if (!option) {
@@ -139,6 +223,21 @@ if (paymentCatalog && selectedPaymentTable && selectedPaymentRowTemplate) {
     if (rows.some((row) => row.option === 'Tuition Fee' && row.amount <= 0)) {
       event.preventDefault();
       window.alert('Please enter the tuition fee amount.');
+      return;
+    }
+
+    const hasTuitionFee = rows.some((row) => row.option === 'Tuition Fee');
+    const hasMonthlyPayment = rows.some((row) => row.option === 'Monthly Payment');
+    if (hasTuitionFee && hasMonthlyPayment) {
+      event.preventDefault();
+      showToast('Choose either Tuition Fee or Monthly Payment only, not both.');
+      return;
+    }
+
+    const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0);
+    if (totalAmount > remainingBeforePayment) {
+      event.preventDefault();
+      window.alert('The entered amount exceeds the remaining balance of ' + formatPHP(remainingBeforePayment) + '.');
       return;
     }
 

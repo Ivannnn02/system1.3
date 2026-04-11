@@ -1496,6 +1496,11 @@ header {
     flex: 1;
 }
 
+.password-field input[type="password"]::-ms-reveal,
+.password-field input[type="password"]::-ms-clear {
+    display: none;
+}
+
 .password-icon {
     color: #98a2b3;
     cursor: pointer;
@@ -1511,11 +1516,11 @@ header {
 .remember {
     display: flex;
     gap: 6px;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .remember input[type="checkbox"] {
-    margin-top: 3px;
+    margin-top: 0;
 }
 
 .login-submit {
