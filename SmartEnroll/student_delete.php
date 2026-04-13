@@ -1,5 +1,9 @@
 ﻿<?php
+require_once __DIR__ . '/auth.php';
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+smartenroll_require_role('admin');
 
 try {
     $conn = new mysqli('127.0.0.1', 'root', '', 'smartenroll');
@@ -15,7 +19,7 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    header('Location: student_list.php');
+    header('Location: student_list.php?status=deleted');
     exit;
 } catch (Throwable $e) {
     http_response_code(500);

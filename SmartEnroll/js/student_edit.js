@@ -1,5 +1,7 @@
 const dobInput = document.querySelector('input[name="dob"]');
 const ageInput = document.querySelector('input[name="age"]');
+const completionDateInput = document.querySelector('input[name="completion_date"]');
+const schoolYearInput = document.querySelector('input[name="school_year"]');
 
 function calculateAge(dobValue) {
   if (!dobValue) return '';
@@ -22,6 +24,27 @@ if (dobInput && ageInput) {
   dobInput.addEventListener('change', () => {
     const age = calculateAge(dobInput.value);
     ageInput.value = age !== '' ? age : '';
+  });
+}
+
+function calculateSchoolYear(dateValue) {
+  if (!dateValue) return '';
+  const completionDate = new Date(dateValue);
+  if (Number.isNaN(completionDate.getTime())) return '';
+  const month = completionDate.getMonth() + 1;
+  const year = completionDate.getFullYear();
+  const startYear = month >= 6 ? year : year - 1;
+  return `${startYear}-${startYear + 1}`;
+}
+
+if (completionDateInput && schoolYearInput) {
+  const initialSchoolYear = calculateSchoolYear(completionDateInput.value);
+  if (initialSchoolYear) {
+    schoolYearInput.value = initialSchoolYear;
+  }
+  completionDateInput.addEventListener('change', () => {
+    const schoolYear = calculateSchoolYear(completionDateInput.value);
+    schoolYearInput.value = schoolYear || '';
   });
 }
 

@@ -1,5 +1,10 @@
 ﻿<?php
+require_once __DIR__ . '/auth.php';
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+$currentUser = smartenroll_require_login();
+$isAdmin = (($currentUser['role'] ?? '') === 'admin');
 
 $rows = [];
 $error = '';
@@ -7,6 +12,7 @@ $page = 1;
 $perPage = 20;
 $totalRows = 0;
 $totalPages = 1;
+$status = trim((string)($_GET['status'] ?? ''));
 
 try {
     $conn = new mysqli('127.0.0.1', 'root', '', 'smartenroll');
@@ -65,6 +71,12 @@ try {
                 <h1>Student List</h1>
                 <p>All enrolled students recorded in SMARTENROLL.</p>
             </div>
+            <?php if ($isAdmin): ?>
+                <a href="student_manage.php" class="student-add-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Enrollment</span>
+                </a>
+            <?php endif; ?>
         </div>
         <div class="student-search">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -73,6 +85,22 @@ try {
     </div>
 
     <div class="student-list-card">
+        <?php if ($status === 'created'): ?>
+            <div class="student-success">
+                <strong>Enrollment added.</strong>
+                <p>The full student record was saved successfully.</p>
+            </div>
+        <?php elseif ($status === 'updated'): ?>
+            <div class="student-success">
+                <strong>Enrollment updated.</strong>
+                <p>The student details were saved successfully.</p>
+            </div>
+        <?php elseif ($status === 'deleted'): ?>
+            <div class="student-success">
+                <strong>Enrollment deleted.</strong>
+                <p>The student record was removed successfully.</p>
+            </div>
+        <?php endif; ?>
         <?php if ($error): ?>
             <div class="student-error">
                 <strong>Unable to load students.</strong>
@@ -124,12 +152,14 @@ try {
                                         <a href="student_view.php?id=<?php echo urlencode((string)($row['id'] ?? '')); ?>" class="action-btn view" title="View">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
-                                        <a href="student_edit.php?id=<?php echo urlencode((string)($row['id'] ?? '')); ?>" class="action-btn edit" title="Edit">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </a>
-                                        <a href="student_delete.php?id=<?php echo urlencode((string)($row['id'] ?? '')); ?>" class="action-btn delete" title="Delete">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </a>
+                                        <?php if ($isAdmin): ?>
+                                            <a href="student_manage.php?id=<?php echo urlencode((string)($row['id'] ?? '')); ?>" class="action-btn edit" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+                                            <a href="student_delete.php?id=<?php echo urlencode((string)($row['id'] ?? '')); ?>" class="action-btn delete" title="Delete">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -167,6 +197,7 @@ try {
     </div>
 </main>
 
+<?php if ($isAdmin): ?>
 <div class="modal-overlay" id="deleteModal">
   <div class="modal-box">
     <div class="modal-icon" id="deleteIconBox">
@@ -181,6 +212,7 @@ try {
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <script src="js/student_list.js"></script>
 </body>

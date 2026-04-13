@@ -90,6 +90,18 @@ function smartenroll_require_login(): array
     return $user;
 }
 
+function smartenroll_require_role(string ...$roles): array
+{
+    $user = smartenroll_require_login();
+    if (!in_array((string)($user['role'] ?? ''), $roles, true)) {
+        http_response_code(403);
+        echo 'Access denied.';
+        exit;
+    }
+
+    return $user;
+}
+
 function smartenroll_logout_user(): void
 {
     smartenroll_auth_start_session();
