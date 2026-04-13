@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 29, 2026 at 10:29 AM
+-- Generation Time: Apr 13, 2026 at 01:06 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -165,7 +165,8 @@ INSERT INTO `enrollments` (`id`, `grade_level`, `student_id`, `school_year`, `co
 (48, 'Toddler', '20260010', '2025-2026', '2026-03-07', 'asd', 'wad', 'fw', '', 'aw', 'Female', '12/12/2006', 19, 'awf', 'as', 'ambasajosiemae@gmail.com', 'Pangasinan', 'Anda', 'Macandocandong', 'asf', 'aw', 'asd', 'wad', 'asd', '09123456789', 'asd', 'fwa', 'fwa', 'asd', '09123456789', 'awf', 'mother', 'asd', 'fwa', 'fwa', 'asd', '09123456789', 'as', 'aw', '09123456789', 'gw', 'wda', '09123456789', 'aw', 'fw', '09123456789', 'fwa', 'no', '', '2026-03-07 14:02:36'),
 (49, 'Toddler', '20260011', '2025-2026', '2026-03-26', 'Sanchez', 'Ivan', 'Umali', '', 'vani', 'Male', '07/02/2005', 20, 'Kapampangan', 'Catholic', 'work.ivansanchez@gmail.com', 'Pampanga', 'Mabalacat City', 'Dapdap', 'asdw3312', 'sd', 'xs', 'g', 'asd', '09123456789', 'waf', 'fqrw', 'afs', 'qwr', '09123456789', 'sfa', 'father', 'sd', 'xs', 'g', 'asd', '09123456789', 'asgf', 'hs', '09123456789', 'asd', 'asfqr', '09123456789', 'awg', 'qr', '09123456789', 'gas', 'no', '', '2026-03-26 10:52:13'),
 (50, 'Casa', '20260012', '2025-2026', '2026-03-26', 'David', 'j', 'a', '', 'qw', 'Female', '05/27/2009', 16, 'asd', 'aefw', 'work.ivansanchez@gmail.com', 'Biliran', 'Biliran', 'Busali', 'asd', 'awg', 'awd', 'wfa', 'wf', '09123456789', 'agbh', 'aw', 'ghaw', 'aw', '09123456789', 'af', 'mother', 'agbh', 'aw', 'ghaw', 'aw', '09123456789', 'gh', 'gaw', '09123456789', 'aw', 'asd', '09123456789', 'agw', 'wg', '09123456789', 'awg', 'no', '', '2026-03-26 12:11:58'),
-(51, 'Casa', '20260013', '2025-2026', '2026-03-29', 'slng', 'mj', 'a', '', 'sie', 'Female', '06/18/2006', 19, 'taglish', 'catholic', 'salungajosiemae@gmail.com', 'Pampanga', 'Mabalacat City', 'Dapdap', '015P.BURGOS ST. MABALACAT', 'Salunga', 'josie', 'b', 'ofw', '09876543211', 'ambasa', 'amor', 'l', 'housewife', '09357236154', 'amor', 'mother', 'ambasa', 'amor', 'l', 'housewife', '09357236154', 'sdg', 'ghsd', '09357236154', 'seh', 'awf', '09357236154', 'seg', 'awg', '09357236154', 'sira ulo', 'no', '', '2026-03-29 06:33:25');
+(51, 'Casa', '20260013', '2025-2026', '2026-03-29', 'slng', 'mj', 'a', '', 'sie', 'Female', '06/18/2006', 19, 'taglish', 'catholic', 'salungajosiemae@gmail.com', 'Pampanga', 'Mabalacat City', 'Dapdap', '015P.BURGOS ST. MABALACAT', 'Salunga', 'josie', 'b', 'ofw', '09876543211', 'ambasa', 'amor', 'l', 'housewife', '09357236154', 'amor', 'mother', 'ambasa', 'amor', 'l', 'housewife', '09357236154', 'sdg', 'ghsd', '09357236154', 'seh', 'awf', '09357236154', 'seg', 'awg', '09357236154', 'sira ulo', 'no', '', '2026-03-29 06:33:25'),
+(52, 'Kindergarten', '20260014', '2025-2026', '2026-04-13', 'De Guzman', 'Jomer', 'Rivera', '', 'jomer', 'Male', '06/24/2005', 20, 'Kapampangan', 'three', 'jomerrdeguzman@gmail.com', 'Pampanga', 'Mabalacat City', 'Dapdap', '14th Street Brgy. Dapdap', 'nsdg', 'ha', 'awg', 'sdg', '09123456789', 'asg', 'ahw', 'd', 'awg', '09123456789', 'haw', 'mother', 'asg', 'ahw', 'd', 'awg', '09123456789', 'ga', 'whg', '09123456789', 'aw', 'aw', '09123456789', 'hwa', 'awg', '09123456789', 'hdf', 'no', '', '2026-04-13 10:26:50');
 
 -- --------------------------------------------------------
 
@@ -225,6 +226,41 @@ CREATE TABLE `tuition_payments` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `tuition_payments`
+--
+
+INSERT INTO `tuition_payments` (`id`, `enrollment_id`, `student_id`, `email`, `school_year`, `grade_level`, `payment_date`, `amount_paid`, `tuition_fee`, `balance_after`, `receipt_no`, `payment_note`, `payment_items`, `payment_token`, `paymongo_checkout_id`, `paymongo_checkout_url`, `payment_status`, `payment_paid_at`, `proof_file`, `proof_original_name`, `proof_uploaded_at`, `proof_status`, `email_sent`, `created_at`) VALUES
+(1, 47, '2026009', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-26', 100.00, 71612.00, 71512.00, '', 'asd', NULL, '2a441125bed6d4ee2b6983fc38ca83da', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 10:45:40'),
+(2, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 100.00, 63340.00, 63240.00, '', 'vaniii', NULL, '956d098ae9620566a3404beb1ac71bf6', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 10:52:43'),
+(3, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 100.00, 63340.00, 63140.00, '', '', NULL, '50768d23d9bc9ae5b112e4f52b31a405', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 11:12:07'),
+(4, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 2000.00, 63340.00, 61140.00, '', '', NULL, '3f4507465c6a0d0d04c9b0cf7331cc86', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:02:57'),
+(5, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 3000.00, 63340.00, 58140.00, '', '', NULL, '86d4953107d9834de2e4400d5c286f79', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:03:16'),
+(6, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 2000.00, 63340.00, 56140.00, '', '', NULL, '808a85da3b6d6109fd40cf3a2c8e2404', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:03:24'),
+(7, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 56140.00, 63340.00, 0.00, '', '', NULL, 'b2fdeca2329e9f5431bfd9703745ebe7', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 12:03:27'),
+(8, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-26', 100.00, 69732.00, 69632.00, '', '', NULL, 'e56cb1401119a88e20bb7b9830916d65', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 12:12:47'),
+(9, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-28', 1000.00, 69732.00, 68632.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', '8fb57ec55c03bee573aa2fa14dedd62f', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 08:10:56'),
+(10, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-28', 74732.00, 69732.00, 0.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":69732},{\"option\":\"Reservation Fee\",\"label\":\"Reservation Fee\",\"amount\":5000}]', 'ac517e2fbe90621d321cca6afaa2e36b', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:37:17'),
+(11, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 65612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'c297bfbaaa6e6dc102c926c428b719c2', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:51:12'),
+(12, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 59612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'afc50566aa5180b5fd6df83c1d73cdda', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:58:24'),
+(13, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 53612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'ae624a0e24a5b2c8bda85e083dc38a0d', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:58:40'),
+(14, 39, '2026001', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 6000.00, 63340.00, 57340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '3660d76ab7c76e796a313315afaa3077', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:59:43'),
+(15, 31, '2026006603', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 6000.00, 63340.00, 57340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'e89ca0d9efde75e66d836eecefa827e5', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 09:18:26'),
+(16, 31, '2026006603', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 100.00, 63340.00, 57240.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '0af4bf9632e6b05b41c56995741470b5', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 09:18:45'),
+(17, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6000.00, 63340.00, 0.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'f9e845672dd4dd801b0660249c8f1e61', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 10:26:16'),
+(18, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6100.00, 63340.00, 0.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '7b5df298d793c345fa4b4d43cb36e1d0', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 10:27:00'),
+(19, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 57340.00, 63340.00, 0.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":57340}]', 'cdf5bb0873216d2ccb2c90ac026cec0b', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 10:51:22'),
+(20, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6000.00, 63340.00, 0.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '54a7e371f6bc3515d6354175d87b9096', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 12:17:01'),
+(21, 51, '20260013', 'salungajosiemae@gmail.com', '2025-2026', 'Casa', '2026-03-29', 100.00, 69732.00, 69632.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '2564d9b5226374d6fde88c5da4784a31', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-29 06:36:03'),
+(22, 51, '20260013', 'salungajosiemae@gmail.com', '2025-2026', 'Casa', '2026-03-29', 1000.00, 69732.00, 68632.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', 'a2cdffdd620c0ff1db0e524b34607c71', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 06:39:28'),
+(23, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 12734.00, 63340.00, 0.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', 'c7cd431a116882372ae3ab3cb0fc1653', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 07:26:04'),
+(24, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 11734.00, 63340.00, 0.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '0ae268361f9b7f37f7acb00cdbf0f5bf', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 07:27:52'),
+(25, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 11834.00, 63340.00, 0.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '6297a3f9eac7283c7e3bd8d819bcb862', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-29 07:28:11'),
+(26, 40, '2026002', 'restonjc1@gmail.com', '2025-2026', 'Casa', '2026-04-13', 6973.20, 69732.00, 62758.80, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":6973.2}]', 'f39c3755823e2a34aa503284fa4cb47e', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-04-13 10:14:11'),
+(27, 52, '20260014', 'jomerrdeguzman@gmail.com', '2025-2026', 'Kindergarten', '2026-04-13', 6561.20, 71612.00, 65050.80, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":6561.2}]', '0e5aa953ae5c8e25c1e96ace2f979007', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-04-13 10:27:17'),
+(28, 52, '20260014', 'jomerrdeguzman@gmail.com', '2025-2026', 'Kindergarten', '2026-04-13', 6000.00, 71612.00, 59050.80, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '67dd64801f5719a3c03ae375a853a562', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-04-13 10:27:45'),
+(29, 35, '2026000035', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-04-13', 6000.00, 63340.00, 57340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '4c755f9cbfd58ad828d96504eb82ae65', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-04-13 10:29:15');
+
 -- --------------------------------------------------------
 
 --
@@ -241,35 +277,11 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `tuition_payments`
+-- Dumping data for table `users`
 --
 
-INSERT INTO `tuition_payments` (`id`, `enrollment_id`, `student_id`, `email`, `school_year`, `grade_level`, `payment_date`, `amount_paid`, `tuition_fee`, `balance_after`, `receipt_no`, `payment_note`, `payment_items`, `payment_token`, `paymongo_checkout_id`, `paymongo_checkout_url`, `payment_status`, `payment_paid_at`, `proof_file`, `proof_original_name`, `proof_uploaded_at`, `proof_status`, `email_sent`, `created_at`) VALUES
-(1, 47, '2026009', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-26', 100.00, 71612.00, 71512.00, '', 'asd', NULL, '2a441125bed6d4ee2b6983fc38ca83da', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 10:45:40'),
-(2, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 100.00, 63340.00, 63240.00, '', 'vaniii', NULL, '956d098ae9620566a3404beb1ac71bf6', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 10:52:43'),
-(3, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 100.00, 63340.00, 63140.00, '', '', NULL, '50768d23d9bc9ae5b112e4f52b31a405', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 11:12:07'),
-(4, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 2000.00, 63340.00, 61140.00, '', '', NULL, '3f4507465c6a0d0d04c9b0cf7331cc86', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:02:57'),
-(5, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 3000.00, 63340.00, 58140.00, '', '', NULL, '86d4953107d9834de2e4400d5c286f79', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:03:16'),
-(6, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 2000.00, 63340.00, 56140.00, '', '', NULL, '808a85da3b6d6109fd40cf3a2c8e2404', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-26 12:03:24'),
-(7, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-26', 56140.00, 63340.00, 0.00, '', '', NULL, 'b2fdeca2329e9f5431bfd9703745ebe7', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 12:03:27'),
-(8, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-26', 100.00, 69732.00, 69632.00, '', '', NULL, 'e56cb1401119a88e20bb7b9830916d65', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-26 12:12:47'),
-(9, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-28', 1000.00, 69732.00, 68632.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', '8fb57ec55c03bee573aa2fa14dedd62f', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 08:10:56'),
-(10, 50, '20260012', 'work.ivansanchez@gmail.com', '2025-2026', 'Casa', '2026-03-28', 74732.00, 69732.00, 69732.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":69732},{\"option\":\"Reservation Fee\",\"label\":\"Reservation Fee\",\"amount\":5000}]', 'ac517e2fbe90621d321cca6afaa2e36b', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:37:17'),
-(11, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 71612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'c297bfbaaa6e6dc102c926c428b719c2', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:51:12'),
-(12, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 71612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'afc50566aa5180b5fd6df83c1d73cdda', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:58:24'),
-(13, 46, '2026008', 'ambasajosiemae@gmail.com', '2025-2026', 'Kindergarten', '2026-03-28', 6000.00, 71612.00, 71612.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'ae624a0e24a5b2c8bda85e083dc38a0d', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:58:40'),
-(14, 39, '2026001', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 6000.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '3660d76ab7c76e796a313315afaa3077', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 08:59:43'),
-(15, 31, '2026006603', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 6000.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'e89ca0d9efde75e66d836eecefa827e5', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 09:18:26'),
-(16, 31, '2026006603', 'restonjc1@gmail.com', NULL, 'Toddler', '2026-03-28', 100.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '0af4bf9632e6b05b41c56995741470b5', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 09:18:45'),
-(17, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6000.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', 'f9e845672dd4dd801b0660249c8f1e61', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 10:26:16'),
-(18, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6100.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '7b5df298d793c345fa4b4d43cb36e1d0', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-28 10:27:00'),
-(19, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 57340.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":57340}]', 'cdf5bb0873216d2ccb2c90ac026cec0b', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 10:51:22'),
-(20, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-28', 6000.00, 63340.00, 63340.00, '', '', '[{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '54a7e371f6bc3515d6354175d87b9096', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-28 12:17:01'),
-(21, 51, '20260013', 'salungajosiemae@gmail.com', '2025-2026', 'Casa', '2026-03-29', 100.00, 69732.00, 69732.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '2564d9b5226374d6fde88c5da4784a31', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-29 06:36:03'),
-(22, 51, '20260013', 'salungajosiemae@gmail.com', '2025-2026', 'Casa', '2026-03-29', 1000.00, 69732.00, 69732.00, '', '', '[{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', 'a2cdffdd620c0ff1db0e524b34607c71', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 06:39:28'),
-(23, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 12734.00, 63340.00, 0.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":1000}]', 'c7cd431a116882372ae3ab3cb0fc1653', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 07:26:04'),
-(24, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 11734.00, 63340.00, 51606.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000}]', '0ae268361f9b7f37f7acb00cdbf0f5bf', '', '', 'ready', NULL, '', '', NULL, 'pending', 0, '2026-03-29 07:27:52'),
-(25, 49, '20260011', 'work.ivansanchez@gmail.com', '2025-2026', 'Toddler', '2026-03-29', 11834.00, 63340.00, 51506.00, '', '', '[{\"option\":\"Monthly Payment\",\"label\":\"Monthly Payment\",\"amount\":5734},{\"option\":\"Registration Fee & Miscellaneous\",\"label\":\"Registration Fee & Miscellaneous\",\"amount\":6000},{\"option\":\"Tuition Fee\",\"label\":\"Tuition Fee\",\"amount\":100}]', '6297a3f9eac7283c7e3bd8d819bcb862', '', '', 'ready', NULL, '', '', NULL, 'pending', 1, '2026-03-29 07:28:11');
+INSERT INTO `users` (`id`, `full_name`, `email`, `password_hash`, `role`, `created_at`) VALUES
+(1, 'Adreo', 'adreomontessori@gmail.com', '$2y$10$wJjq27WlheVt61K9uFf9DuT04cmNF8NpRjFgDrlp/9aBoD.YnGLGm', 'admin', '2026-04-13 10:12:51');
 
 --
 -- Indexes for dumped tables
@@ -328,7 +340,7 @@ ALTER TABLE `batch_assignments`
 -- AUTO_INCREMENT for table `enrollments`
 --
 ALTER TABLE `enrollments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `student_requirements`
@@ -340,13 +352,13 @@ ALTER TABLE `student_requirements`
 -- AUTO_INCREMENT for table `tuition_payments`
 --
 ALTER TABLE `tuition_payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
