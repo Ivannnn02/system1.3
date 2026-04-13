@@ -24,6 +24,8 @@ $loginEmailValue = '';
 $registerNameValue = '';
 $registerEmailValue = '';
 $registerRoleValue = 'registrar';
+$loginCsrfToken = smartenroll_csrf_token('login_form');
+$registerCsrfToken = smartenroll_csrf_token('register_form');
 
 if (($_GET['status'] ?? '') === 'logged_out') {
     $successMessage = 'You have been logged out successfully.';
@@ -42,17 +44,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn instanceof mysqli) {
 
     if ($authAction === 'login') {
         $activeTab = 'login';
+        $csrfToken = trim((string)($_POST['csrf_token'] ?? ''));
         $loginEmailValue = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
+        $attemptKey = smartenroll_login_attempt_key($loginEmailValue);
 
-        if ($loginEmailValue === '' || $password === '') {
+        if (!smartenroll_verify_csrf($csrfToken, 'login_form')) {
+            $errorMessage = 'Session verification failed. Please refresh and try again.';
+        } elseif (!smartenroll_login_is_allowed($attemptKey, $retryAfterSeconds)) {
+            $errorMessage = 'Too many login attempts. Try again in ' . max(1, (int)ceil(((int)$retryAfterSeconds) / 60)) . ' minute(s).';
+        } elseif ($loginEmailValue === '' || $password === '') {
             $errorMessage = 'Please enter your email address and password.';
         } else {
             $user = smartenroll_find_user_by_email($conn, $loginEmailValue);
 
             if ($user === null || !password_verify($password, (string) $user['password_hash'])) {
+                smartenroll_record_login_failure($attemptKey);
                 $errorMessage = 'The email address or password is incorrect.';
             } else {
+                smartenroll_clear_login_failures($attemptKey);
                 smartenroll_login_user($user);
                 header('Location: dashboard.php');
                 exit;
@@ -62,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn instanceof mysqli) {
 
     if ($authAction === 'register') {
         $activeTab = 'register';
+        $csrfToken = trim((string)($_POST['csrf_token'] ?? ''));
         $registerNameValue = trim((string) ($_POST['full_name'] ?? ''));
         $registerEmailValue = trim((string) ($_POST['register_email'] ?? ''));
         $registerRoleValue = strtolower(trim((string) ($_POST['role'] ?? 'registrar')));
@@ -69,7 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn instanceof mysqli) {
         $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
         $allowedRoles = ['admin', 'registrar'];
 
-        if ($registerNameValue === '' || $registerEmailValue === '' || $password === '' || $confirmPassword === '') {
+        if (!smartenroll_verify_csrf($csrfToken, 'register_form')) {
+            $errorMessage = 'Session verification failed. Please refresh and try again.';
+        } elseif ($registerNameValue === '' || $registerEmailValue === '' || $password === '' || $confirmPassword === '') {
             $errorMessage = 'Please complete all registration fields.';
         } elseif (!filter_var($registerEmailValue, FILTER_VALIDATE_EMAIL)) {
             $errorMessage = 'Please enter a valid email address for registration.';
@@ -161,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn instanceof mysqli) {
                 <p class="login-subtitle login-subtitle-centered">Use your SMARTENROLL credentials.</p>
                 <form class="login-form" id="loginForm" action="login.php" method="post">
                     <input type="hidden" name="auth_action" value="login">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($loginCsrfToken, ENT_QUOTES, 'UTF-8'); ?>">
                     <label>
                         Email Address
                         <input type="email" name="email" id="loginEmail" value="<?php echo htmlspecialchars($loginEmailValue, ENT_QUOTES, 'UTF-8'); ?>" placeholder="adreomontessori@gmail.com" required>
@@ -189,6 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn instanceof mysqli) {
                 <p class="login-subtitle login-subtitle-centered">Create a unique admin or registrar account.</p>
                 <form class="login-form" id="registerForm" action="login.php" method="post">
                     <input type="hidden" name="auth_action" value="register">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($registerCsrfToken, ENT_QUOTES, 'UTF-8'); ?>">
                     <label>
                         Full Name
                         <input type="text" name="full_name" value="<?php echo htmlspecialchars($registerNameValue, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Enter full name" required>

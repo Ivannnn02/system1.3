@@ -1,7 +1,10 @@
 ﻿<?php
-session_start();
+require_once __DIR__ . '/auth.php';
+smartenroll_auth_start_session();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require_once __DIR__ . '/mail/PHPMailer/mail_helper.php';
+
+$currentUser = smartenroll_require_role(['admin', 'registrar']);
 
 $student = null;
 $error = '';
@@ -150,8 +153,13 @@ if ($student && isset($conn) && $conn instanceof mysqli) {
 $remainingBalance = max(0, round($totalTuition - $amountPaid, 2));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
+    $csrfToken = trim((string)($_POST['csrf_token'] ?? ''));
+    if (!smartenroll_verify_csrf($csrfToken, 'tuition_details_form')) {
+        $warningMessage = 'Session verification failed. Please refresh and try again.';
+    }
+
     $action = trim((string)($_POST['action'] ?? ''));
-    if ($action === 'send_tuition_details') {
+    if ($action === 'send_tuition_details' && $warningMessage === '') {
         $sent = send_tuition_details_email($student, $totalTuition, $amountPaid, $remainingBalance);
         if ($sent) {
             $_SESSION['tuition_details_success'] = 'Tuition details sent to ' . trim((string)($student['email'] ?? '')) . '.';
@@ -163,6 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
         exit;
     }
 }
+
+$tuitionDetailsCsrfToken = smartenroll_csrf_token('tuition_details_form');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -322,6 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
                     <form method="post" action="tuition_details.php">
                         <input type="hidden" name="action" value="send_tuition_details">
                         <input type="hidden" name="student_id" value="<?php echo htmlspecialchars((string)$student['student_id']); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($tuitionDetailsCsrfToken); ?>">
                         <button type="submit" class="tuition-email-btn" <?php echo filter_var((string)($student['email'] ?? ''), FILTER_VALIDATE_EMAIL) ? '' : 'disabled'; ?>>
                             <i class="fa-solid fa-paper-plane"></i>
                             Send Tuition Details to Email
